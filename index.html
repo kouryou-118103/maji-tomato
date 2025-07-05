@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍅</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+      flex-direction: column;
+    }
+    .quiz-container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .toggle-container {
+      margin-bottom: 20px;
+    }
+    .question {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #6a11cb;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .options button:hover {
+      background: #2575fc;
+    }
+    .score {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    .message {
+      margin-top: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .message.show {
+      opacity: 1;
+    }
+    .correct {
+      color: #00ff3c;
+    }
+    .incorrect {
+      color: #ff0a0e;
+    }
+  </style>
+</head>
+<body>
+  <div class="toggle-container">
+    <label>
+      <input type="radio" name="category" value="words" checked> 英コミュ
+    </label>
+    <label>
+      <input type="radio" name="category" value="economy"> 公共
+    </label>
+  </div>
+  
+  <div class="quiz-container">
+    <div id="quiz">
+      <div class="question" id="question">ここに問題が表示されます</div>
+      <br><br>
+      <div class="options" id="options"></div>
+      <div class="message" id="message"></div>
+      <div class="score" id="score">スコア: 0 / 0</div>
+    </div>
+  </div>
+
+  <script>
+    const wordDict =  {
+  "grant": "認める/容認する",
+  "northern": "北の",
+  "intense": "強烈な/激しい",
+  "compound": "化合物",
+  "sand": "砂",
+  "beetle": "甲虫",
+  "explorer": "探検家",
+  "tomb": "墓",
+  "essential": "必要不可欠な",
+  "take A for granted": "Aを当然だと思う",
+  "bring about A": "Aをもたらす/引き起こす",
+  "come into contact with A": "Aと接触する",
+  "in the shape of A": "Aの姿/形をした",
+  "monk": "修道士",
+  "curved": "湾曲した",
+  "aid": "補助具/助け",
+  "magnifier": "拡大鏡",
+  "scholar": "学者",
+  "farsightedness": "遠視",
+  "rare": "まれな/めずらしい",
+  "invent": "発明する",
+  "flea": "ノミ(虫)",
+  "invisible": "目に見えない",
+  "virus": "ウイルス",
+  "vaccine": "ワクチン",
+  "Jupiter": "木星",
+  "shape A into B": "AにBを作る",
+  "have a strong influence on A": "Aに強い影響を及ぼす",
+  "a great number of A": "多数のA",
+  "line up A": "Aを1列に並べる",
+  "side by side": "並んで",
+  "in line with A": "Aと一直線になって",
+  "before long": "まもなく",
+  "in turn": "次に",
+  "hear of A": "Aのことを耳にする",
+  "a real challenge to A": "Aへの本当の疑問",
+  "electron": "電子",
+  "crossbow": "石弓",
+  "arrow": "矢",
+  "bolt": "太矢/ボルト",
+  "target": "目標",
+  "fiber": "繊維/糸",
+  "thin": "薄い",
+  "yacht": "ヨット",
+  "circuit board": "回路基板",
+  "go on to do": "次に〜する",
+  "date back to A": "Aにさかのぼる",
+  "selfie": "自撮りの写真",
+  "accustomed": "慣れている",
+  "creativity": "創造性",
+  "perspective": "視点",
+  "be accustomed to A": "Aに慣れている",
+  "be made of A": "Aでできている",
+  "be of great interest": "大変興味深い",
+  "put A in perspective": "大局的な視点からAを眺める",
+  "as shown in A": "Aに示すように"};
+    
+    const economyDict = {
+  "企業が財やサービスの生産によって得るもの": "利潤",
+  "国や地方公共団体が出資、経営する企業": "公企業",
+  "株式会社への出資者": "株主",
+  "株式について、自分の出資額をこえて責任を負うことがないこと": "有限責任",
+  "株式市場や店頭において株式の売買ができる企業": "上場企業",
+  "会社の経営が専門の経営者の手に委ねられていること": "所有と所得の分離",
+  "株主や、従業員、取引先、債権者などの利害関係者": "ステークホルダー",
+  "企業がステークホルダーの利益に反する行動を取らないように監視、牽制すること": "コーポレート・ガバナンス(企業統治)",
+  "企業倫理に従って活動する企業に投資家が出資すること": "社会的責任投資(SRI)",
+  "企業による、地域社会でのボランティア活動などの慈善事業": "フィランソロピー",
+  "企業による、芸術・文化への支援活動": "メセナ",
+  "本来の事業から他分野まで事業を拡張した企業": "コングロマリット(複合企業)",
+  "世界的な規模で経営戦略を立てて活動する企業": "多国籍企業",
+  "大企業と中小企業の間に存在する資金や生産性の格差": "経済の二重構造",
+  "特定の親企業から委託された仕事を行なう中小企業": "下請け",
+  "独自の製造技術やソフトで新しい市場の開拓に挑む企業": "ベンチャー企業",
+  "高い成長率が期待される未上場企業に投資する投資会社": "ベンチャーキャピタル",
+  "ベンチャーキャピタルなどが投資を行なう、新興企業向けの株式市場": "新興株式市場",
+  "価格により、需要量と供給量が調整され、その量が一致する機能": "価格の自動調整作用=市場機構",
+  "寡占市場において、価格が下がりにくくなること": "価格の下方硬直性",
+  "ラッサールが小さい政府のことを批判的に表現した言葉": "夜警国家",
+  "市場機能がうまく機能しない現象": "市場の失敗",
+  "広告・宣伝など価格以外の競争": "非価格競争",
+  "独占禁止法に基づいて、内閣府の外局として設置されている行政委員会": "公正取引委員会",
+  "独占禁止法の改正によって1997年に解禁された会社形態": "持株会社",
+  "灯台などの民間で供給されにくいものは、フリーライダーの利用を排除できないということ": "非排除制",
+  "需要と供給に関係のないところで起こる良い作用": "外部経済",
+  "需要と供給に関係のないところで起こる悪い作用": "外部不経済",
+  "貸し手と借り手の間に金融機関が入って仲立ちをする資金の融通": "間接金融",
+  "銀行が預金の受け入りと貸し出しを繰り返すことで、最初の貯金額の数倍の貸し出しを銀行全体で行なうことができる仕組み": "信用創造",
+  "中央銀行が金などの保有量と無関係に通貨を発行できる制度": "管理通貨制度",
+  "日銀が短期金利市場で国債や手形を売買することで、資金の供給量を調節して政策金利を誘導する政策": "公開市場操作",
+  "現在の日本の政策金利": "無担保コールレート",
+  "政策金利をゼロに誘導する1990〜2000年の日銀の政策": "ゼロ金利政策",
+  "操作目標を金利ではなく、日銀当座預金残高を増やすことにする2001〜2006年の政策": "量的緩和政策",
+  "金融機関が保有する日銀当座預金の一部に対する利子をマイナスにする2016年からの政策": "マイナス金利政策",
+  "財政の機能は、資源分配の機能と所得再分配の機能と他になにか": "景気調整の機能",
+  "財政の機能は、資源分配の機能と景気調整の機能と他になにか": "所得再分配の機能",
+  "財政の機能は、景気調整の機能と財産再分配の機能と他になにか": "資源分配の機能",
+  "所得が高くなるにつれて段階的に高い税率が適用される租税制度": "累進課税制度",
+  "累進課税精度や社会保障制度などで景気を安定させる財政の機能": "自動安定化装置(ビルトイン・スタビライザー)",
+  "特定事業や特定の資金を運用・管理させるための国の予算": "特別会計予算",
+  "個人番号をもとに社会保証や善に関する個人情報を照会する制度": "マイナンバー制度(社会保障・税番号制度)",
+  "国債のうち、公共事業などの資産不足を補うもの": "建設公債(建設国債)",
+  "国債は日銀が直接引き受けをしない原則": "市中消化の原理",
+  "公共投資の増大が当初の投資額よりも多くの国民所得を発生させる効果": "乗数効果",
+  "政府と民間の共同出資でできる企業": "公私合同企業",
+  "民間人が営利のために出資し、経営する企業": "私企業",
+  "生産量が増えるほど間接費が低下すること": "スケールメリット",
+  "財務情報などの適切な情報を公開すること": "ディスクロージャー",
+  "企業の社会的責任": "CSR(Corporate Social Responsibility)",
+  "国際標準化機構": "ISO",
+  "アダム=スミスが自由な経済活動はこれに導かれるといった": "見えざる手",
+  "売り手と買い手が持つ情報に差があること": "情報の非対称性",
+  "企業が株式から社債を発行し、個人や企業から直接資金調達を行なうもの": "直接金融",
+  "日本銀行の役割。政府の銀行と銀行の銀行とあと1つ": "発券銀行",
+  "日本銀行の役割。発券銀行と銀行の銀行とあと1つ": "政府の銀行",
+  "日本銀行の役割。発券銀行と政府の銀行とあと1つ": "銀行の銀行",
+  "個人や一般法人、地方公共団体などが保有する現金通貨と預金通貨などの通貨量の残高を集計した統計": "マネーストック",
+  "預けてから一定期間引き出すことができない定期預金": "準通貨",
+  "金融市場で第三者に売買することができる大口の預金": "CD（譲渡制預金）",
+  "景気安定化のための裁量的財政政策": "フィスカル・ポリシー",
+  "公債以外の歳入と歳出のバランス": "プライマリーバランス",
+  "同じ所得の人は同じだけ負担するべきという考え方": "水平的公平",
+  "所得の多い人は多く負担すべきという考え方": "垂直的公平",
+  "財政特例法によって赤字を補うために発行している国債": "特例国債(赤字国債)",
+  "財政に占める公債の返済などの費用が増加し、財政の弾力的な運用が困難になること": "財政の硬直化",
+  "財政収入の中で大きな割合を占めるもの": "租税"
+}
+
+;
+
+    let score = 0;
+    let total = 0;
+
+    function getRandomWord(dict) {
+      const keys = Object.keys(dict);
+      const questionWord = keys[Math.floor(Math.random() * keys.length)];
+      const correctAnswer = dict[questionWord];
+      const options = new Set([correctAnswer]);
+      
+      while (options.size < 4) {
+        const option = dict[keys[Math.floor(Math.random() * keys.length)]];
+        options.add(option);
+      }
+
+      return {
+        question: questionWord,
+        options: Array.from(options).sort(() => Math.random() - 0.5),
+        correctAnswer
+      };
+    }
+
+    function nextQuestion() {
+      const category = document.querySelector('input[name="category"]:checked').value;
+      const dict = category === "words" ? wordDict : economyDict;
+      const { question, options, correctAnswer } = getRandomWord(dict);
+      
+      document.getElementById('question').innerText = `${question} は？`;
+      
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = '';
+      options.forEach((option) => {
+        const button = document.createElement('button');
+        button.innerText = option;
+        button.onclick = () => checkAnswer(option, correctAnswer);
+        optionsDiv.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selectedOption, correctAnswer) {
+      total++;
+      const messageElement = document.getElementById('message');
+      
+      if (selectedOption === correctAnswer) {
+        score++;
+        messageElement.innerText = '正解！';
+        messageElement.classList.remove('incorrect');
+        messageElement.classList.add('correct');
+      } else {
+        messageElement.innerText = `不正解！正解は「${correctAnswer}」です。`;
+        messageElement.classList.remove('correct');
+        messageElement.classList.add('incorrect');
+      }
+
+      document.getElementById('score').innerText = `スコア: ${score} / ${total}`;
+      messageElement.classList.add('show');
+      setTimeout(() => {
+        messageElement.classList.remove('show');
+        nextQuestion();
+      }, 1000);
+    }
+
+    document.querySelectorAll('input[name="category"]').forEach(radio => {
+      radio.addEventListener('change', nextQuestion);
+    });
+
+    nextQuestion();
+  </script>
+</body>
+</html>
